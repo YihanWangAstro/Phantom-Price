@@ -379,7 +379,7 @@ ifeq ($(SETUP), tde)
     SETUPFILE= setup_star.f90
     ANALYSIS=analysis_tde.f90
     GRAVITY=yes
-    ISOTHERMAL=yes
+    #ISOTHERMAL=yes
     MODFILE=moddump_tidal.f90
     KNOWN_SETUP=yes
 endif

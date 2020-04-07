@@ -28,6 +28,7 @@ module options
  implicit none
  character(len=80), parameter, public :: &  ! module version
     modid="$Id$"
+
 !
 ! these are parameters which may be changed by the user
 ! and read from the input file
@@ -36,6 +37,9 @@ module options
  integer, public :: nfulldump,nmaxdumps,iexternalforce,idamp
  real, public :: tolh,damp,rkill
  real(kind=4), public :: twallmax
+
+! radiation pressure
+ real, public :: rad_pressure
 
 ! artificial viscosity, thermal conductivity, resistivity
 
@@ -100,6 +104,7 @@ subroutine set_default_options
  iresistive_heating = 1
  icooling           = 0
  polyk2             = 0 ! only used for ieos=8
+ rad_pressure       = 0
 
  ! artificial viscosity
  if (maxalpha>0 .and. maxalpha==maxp) then
