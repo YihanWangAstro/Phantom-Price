@@ -56,7 +56,7 @@
 !--------------------------------------------------------------------------
 module eos
  implicit none
- integer, parameter, public :: maxeos = 16
+ integer, parameter, public :: maxeos = 17
  real,               public :: polyk, polyk2, gamma
  real,               public :: qfacdisc
  logical, parameter, public :: use_entropy = .false.
@@ -309,7 +309,7 @@ subroutine equationofstate(eos_type,ponrhoi,spsoundi,rhoi,xi,yi,zi,eni,tempi)
 !       call fatal('eos','tried to call NL3 eos without passing temperature')
 !    endif
 
- case(1124)
+ case(17)
    if (present(tempi)) then
       call eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma, gmw)
    else
