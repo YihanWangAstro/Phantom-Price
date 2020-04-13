@@ -392,7 +392,7 @@ subroutine eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma, 
    use physcon, only: mass_proton_cgs, kboltz, c, steboltz
 
    real, intent(inout) :: tempi
-   real, intent(inout) :: rhoi
+   real, intent(in) :: rhoi
    real, intent(out) :: ponrhoi
    real, intent(out) :: spsoundi
    real, intent(in) :: eni
