@@ -311,7 +311,7 @@ subroutine equationofstate(eos_type,ponrhoi,spsoundi,rhoi,xi,yi,zi,eni,tempi)
 
  case(1124)
    if (present(tempi)) then
-      call eos_radiative_pres_sound(tempi, ponrhoi, spsoundi, eni, gamma, gmw)
+      call eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma, gmw)
    else
       ponrhoi  = 0.
       spsoundi = 0.
@@ -386,12 +386,13 @@ enddo
 
 end subroutine eos_radiative_calc_temperature
 
-subroutine eos_radiative_pres_sound(tempi, ponrhoi, spsoundi, eni, gamma, gmw)
+subroutine eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma, gmw)
 
-   use units,   only:unit_energ, udist, utime
-   use physcon, only:mass_proton_cgs,kboltz,c,steboltz
+   use units,   only: unit_ergg
+   use physcon, only: mass_proton_cgs, kboltz, c, steboltz
 
    real, intent(inout) :: tempi
+   real, intent(inout) :: rhoi
    real, intent(out) :: ponrhoi
    real, intent(out) :: spsoundi
    real, intent(in) :: eni
@@ -401,9 +402,9 @@ subroutine eos_radiative_pres_sound(tempi, ponrhoi, spsoundi, eni, gamma, gmw)
    real :: ideal_gas_ut_ratio
    real :: radiative_const
 
-   ideal_gas_ut_ratio = kboltz/((gamma - 1) * mass_proton_cgs * gmw ) / unit_energ
+   ideal_gas_ut_ratio = kboltz / ((gamma - 1) * mass_proton_cgs * gmw ) / unit_ergg
 
-   radiative_const = 4. * steboltz / c  * udist * udist * udist / unit_energ
+   radiative_const = 4. * steboltz / (c * rhoi)  / unit_ergg
 
    call eos_radiative_calc_temperature(tempi, eni, radiative_const, ideal_gas_ut_ratio)
 
