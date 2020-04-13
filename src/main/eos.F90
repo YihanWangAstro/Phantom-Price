@@ -362,6 +362,7 @@ real function uthermal_f(tempi, eni, a, b)
 
 ! find root aT^4+bT=c for T 
 subroutine eos_radiative_calc_temperature(tempi, eni, a, b)
+use io,         only: fatal
 real, intent(in) :: a
 real, intent(in) :: b
 real, intent(inout) :: tempi
@@ -375,9 +376,11 @@ real, parameter :: tol = 1e-6
 
 h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
 
-do i = 1, max(1,maxiter)
+do i = 1, max(1, maxiter)
    if( abs(h) <= tol ) then
       exit
+   else if(i+1 == maxiter) then
+      call fatal('eos', 'cannot find converged temperature in u=aT^4+bT')
    endif
 
    h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)

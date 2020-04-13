@@ -384,6 +384,16 @@ ifeq ($(SETUP), tde)
     KNOWN_SETUP=yes
 endif
 
+ifeq ($(SETUP), radiative_tde)
+#   tidal disruption simulations
+    SETUPFILE= setup_star.f90
+    ANALYSIS=analysis_tde.f90
+    GRAVITY=yes
+    STORE_TEMP=yes
+    MODFILE=moddump_tidal.f90
+    KNOWN_SETUP=yes
+endif
+
 ifeq ($(SETUP), polytrope)
 #   single (option 2) or binary (option 3) polytrope test
     SETUPFILE= setup_star.f90
