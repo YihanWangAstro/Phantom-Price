@@ -196,6 +196,7 @@ subroutine write_infile(infile,logfile,evfile,dumpfile,iwritein,iprint)
  ! thermodynamics
  !
  call write_options_eos(iwritein)
+
  if (maxvxyzu >= 4 .and. (ieos==2 .or. ieos==10 .or. ieos==15) ) then
     call write_inopt(ipdv_heating,'ipdv_heating','heating from PdV work (0=off, 1=on)',iwritein)
     call write_inopt(ishock_heating,'ishock_heating','shock heating (0=off, 1=on)',iwritein)
@@ -425,6 +426,8 @@ subroutine read_infile(infile,logfile,evfile,dumpfile)
        read(valstring,*,iostat=ierr) shearparam
     case('bulkvisc')
        read(valstring,*,iostat=ierr) bulkvisc
+    !case('rad_pressure')
+    !   read(valstring,*,iostat=ierr) rad_pressure
 #ifdef MCFOST
     case('use_mcfost')
        read(valstring,*,iostat=ierr) use_mcfost
@@ -433,6 +436,7 @@ subroutine read_infile(infile,logfile,evfile,dumpfile)
        use_Voronoi_limits_file = .true.
     case('use_mcfost_stars')
        read(valstring,*,iostat=ierr) use_mcfost_stellar_parameters
+    
 #endif
     case default
        imatch = .false.

@@ -38,9 +38,6 @@ module options
  real, public :: tolh,damp,rkill
  real(kind=4), public :: twallmax
 
-! radiation pressure
- real, public :: rad_pressure
-
 ! artificial viscosity, thermal conductivity, resistivity
 
  real, public :: alpha,alphau,beta
@@ -104,7 +101,6 @@ subroutine set_default_options
  iresistive_heating = 1
  icooling           = 0
  polyk2             = 0 ! only used for ieos=8
- rad_pressure       = 0
 
  ! artificial viscosity
  if (maxalpha>0 .and. maxalpha==maxp) then

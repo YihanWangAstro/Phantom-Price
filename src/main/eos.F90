@@ -60,8 +60,10 @@ module eos
  real,               public :: polyk, polyk2, gamma
  real,               public :: qfacdisc
  logical, parameter, public :: use_entropy = .false.
+
  logical,            public :: extract_eos_from_hdr = .false.
  integer,            public :: isink = 0
+ !logical,            public :: rad_pressure = .false.
 
  data qfacdisc /0.75/
 
@@ -114,10 +116,12 @@ contains
 subroutine equationofstate(eos_type,ponrhoi,spsoundi,rhoi,xi,yi,zi,eni,tempi)
  use io,    only:fatal,error,warning
  use part,  only:xyzmh_ptmass
- use units,   only:unit_density,unit_pressure,unit_ergg,unit_velocity
+ use units,   only:unit_density,unit_pressure,unit_ergg,unit_velocity, udist, utime, unit_energ
  use eos_mesa, only:get_eos_pressure_gamma1_mesa
  use eos_helmholtz, only:eos_helmholtz_pres_sound
  use eos_shen, only: eos_shen_NL3
+
+ !use eos_radiative, only: eos_radiative_pres_sound
 
  integer, intent(in)  :: eos_type
  real,    intent(in)  :: rhoi,xi,yi,zi
@@ -127,6 +131,7 @@ subroutine equationofstate(eos_type,ponrhoi,spsoundi,rhoi,xi,yi,zi,eni,tempi)
  real :: r,omega,bigH,polyk_new,r1,r2
  real :: gammai
  real :: cgsrhoi, cgseni, cgspgas, pgas, gam1, cgsspsoundi
+ real :: ponrhoi_rad
  integer :: ierr
 
  select case(eos_type)
@@ -304,16 +309,110 @@ subroutine equationofstate(eos_type,ponrhoi,spsoundi,rhoi,xi,yi,zi,eni,tempi)
 !       call fatal('eos','tried to call NL3 eos without passing temperature')
 !    endif
 
-
-
+ case(1124)
+   if (present(tempi)) then
+      call eos_radiative_pres_sound(tempi, ponrhoi, spsoundi, eni, gamma, gmw)
+   else
+      ponrhoi  = 0.
+      spsoundi = 0.
+      call fatal('eos','tried to call radiative eos without passing temperature')
+   endif
+    
  case default
     spsoundi = 0. ! avoids compiler warnings
     ponrhoi  = 0.
     call fatal('eos','unknown equation of state')
  end select
 
+ !if (rad_pressure) then
+ !  if (present(tempi)) then
+ !     !c_light = c / (udist*utime)
+ !     ponrhoi_rad =  4. * steboltz * tempi**4 / ( 3. * c * rhoi) / (unit_energ / udist**3)
+ !     ponrhoi = ponrhoi + ponrhoi
+ !     spsoundi = sqrt(gamma*ponrhoi_rad + spsoundi*spsoundi)
+ !  endif
+ !endif
+
  return
 end subroutine equationofstate
+
+
+!----------------------------------------------------------------
+!+
+!  radiative eos 
+! TODO: make it a module
+!+
+!----------------------------------------------------------------
+real function uthermal_f(tempi, eni, a, b)
+   real, intent(in) :: tempi
+   real, intent(in) :: eni
+   real, intent(in) :: a
+   real, intent(in) :: b
+
+   uthermal_f = a * tempi**4 + b * tempi  - eni
+ end function
+
+ real function uthermal_df(tempi, a, b)
+   real, intent(in) :: tempi
+   real, intent(in) :: a
+   real, intent(in) :: b
+
+   uthermal_df = 4 * a * tempi**3 + b 
+ end function
+
+! find root aT^4+bT=c for T 
+subroutine eos_radiative_calc_temperature(tempi, eni, a, b)
+real, intent(in) :: a
+real, intent(in) :: b
+real, intent(inout) :: tempi
+real, intent(in) :: eni
+
+real :: h
+integer :: i
+
+integer, parameter :: maxiter = 50
+real, parameter :: tol = 1e-6
+
+h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
+
+do i = 1, max(1,maxiter)
+   if( abs(h) <= tol ) then
+      exit
+   endif
+
+   h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
+   tempi = tempi - h
+enddo
+
+end subroutine eos_radiative_calc_temperature
+
+subroutine eos_radiative_pres_sound(tempi, ponrhoi, spsoundi, eni, gamma, gmw)
+
+   use units,   only:unit_energ, udist, utime
+   use physcon, only:mass_proton_cgs,kboltz,c,steboltz
+
+   real, intent(inout) :: tempi
+   real, intent(out) :: ponrhoi
+   real, intent(out) :: spsoundi
+   real, intent(in) :: eni
+   real, intent(in) :: gamma
+   real, intent(in) :: gmw
+
+   real :: ideal_gas_ut_ratio
+   real :: radiative_const
+
+   ideal_gas_ut_ratio = kboltz/((gamma - 1) * mass_proton_cgs * gmw ) / unit_energ
+
+   radiative_const = 4. * steboltz / c  * udist * udist * udist / unit_energ
+
+   call eos_radiative_calc_temperature(tempi, eni, radiative_const, ideal_gas_ut_ratio)
+
+   ponrhoi =  radiative_const * tempi**4/3. + ideal_gas_ut_ratio * (gamma - 1) * tempi
+
+   spsoundi = sqrt(gamma*ponrhoi)
+
+end subroutine eos_radiative_pres_sound
+
 
 !----------------------------------------------------------------
 !+
@@ -607,6 +706,7 @@ subroutine write_options_eos(iunit)
  write(iunit,"(/,a)") '# options controlling equation of state'
  call write_inopt(ieos,'ieos','eqn of state (1=isoth;2=adiab;3=locally iso;8=barotropic)',iunit)
  call write_inopt(gmw,'mu','mean molecular weight',iunit)
+ !call write_inopt(rad_pressure,'rad_pressure','if use radiation pressure',iunit)
  select case(ieos)
  case(8)
     call write_inopt(drhocrit0,  'drhocrit','transition size between rhocrit0 & 1 (fraction of rhocrit0; barotropic eos)',iunit)
