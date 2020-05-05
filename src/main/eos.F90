@@ -316,7 +316,7 @@ subroutine equationofstate(eos_type,ponrhoi,spsoundi,rhoi,xi,yi,zi,eni,tempi)
 
  case(17)
    if (present(tempi)) then
-      call eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma, gmw)
+      call eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma)
    else
       ponrhoi  = 0.
       spsoundi = 0.
@@ -376,7 +376,7 @@ real, intent(in) :: eni
 real :: h
 integer :: i
 
-integer, parameter :: maxiter = 10
+integer, parameter :: maxiter = 50
 real, parameter :: rtol = 1e-6
 real, parameter :: atol = 1e-6
 
@@ -395,18 +395,17 @@ enddo
 
 end subroutine eos_radiative_calc_temperature
 
-subroutine eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma, gmw)
+subroutine eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma)
    real, intent(inout) :: tempi
    real, intent(in) :: rhoi
    real, intent(out) :: ponrhoi
    real, intent(out) :: spsoundi
    real, intent(in) :: eni
    real, intent(in) :: gamma
-   real, intent(in) :: gmw
 
-   call eos_radiative_calc_temperature(tempi, eni, radiative_const / rhoi, ideal_gas_ut_ratio)
+   call eos_radiative_calc_temperature(tempi, eni, radiative_const / rhoi, ideal_gas_ut_ratio / (gamma - 1))
 
-   ponrhoi =  radiative_const / rhoi * tempi**4/3. + ideal_gas_ut_ratio * (gamma - 1) * tempi
+   ponrhoi =  radiative_const / rhoi * tempi**4/3. + ideal_gas_ut_ratio * tempi
 
    spsoundi = sqrt(gamma*ponrhoi)
 
@@ -611,7 +610,7 @@ subroutine init_eos(eos_type,ierr)
     call init_eos_shen_NL3(ierr)
 
  case(17)
-   ideal_gas_ut_ratio = kboltz / ((gamma - 1) * mass_proton_cgs * gmw ) / unit_ergg
+   ideal_gas_ut_ratio = kboltz / ( mass_proton_cgs * gmw * unit_ergg)
 
    radiative_const = 4. * steboltz / (c * unit_ergg)
 
