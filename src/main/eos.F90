@@ -103,6 +103,11 @@ module eos
  real            :: rhocrit0pwp,rhocrit1pwp,rhocrit2pwp,p0pwp,p1pwp,p2pwp,k0pwp,k1pwp,k2pwp,k3pwp
  real, public    :: temperature_coef
 
+ !--radiative part
+ real, public    :: ideal_gas_ut_ratio
+ real, public    :: radiative_const
+ !--
+
  logical, public :: done_init_eos = .false.
 
 contains
@@ -371,13 +376,14 @@ real, intent(in) :: eni
 real :: h
 integer :: i
 
-integer, parameter :: maxiter = 50
-real, parameter :: tol = 1e-6
+integer, parameter :: maxiter = 10
+real, parameter :: rtol = 1e-6
+real, parameter :: atol = 1e-6
 
 h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
 
 do i = 1, max(1, maxiter)
-   if( abs(h) <= tol ) then
+   if( abs(h)/(abs(tempi) + atol) <= rtol ) then
       exit
    else if(i+1 == maxiter) then
       call fatal('eos', 'cannot find converged temperature in u=aT^4+bT')
@@ -390,10 +396,6 @@ enddo
 end subroutine eos_radiative_calc_temperature
 
 subroutine eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma, gmw)
-
-   use units,   only: unit_ergg
-   use physcon, only: mass_proton_cgs, kboltz, c, steboltz
-
    real, intent(inout) :: tempi
    real, intent(in) :: rhoi
    real, intent(out) :: ponrhoi
@@ -402,16 +404,9 @@ subroutine eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma, 
    real, intent(in) :: gamma
    real, intent(in) :: gmw
 
-   real :: ideal_gas_ut_ratio
-   real :: radiative_const
+   call eos_radiative_calc_temperature(tempi, eni, radiative_const / rhoi, ideal_gas_ut_ratio)
 
-   ideal_gas_ut_ratio = kboltz / ((gamma - 1) * mass_proton_cgs * gmw ) / unit_ergg
-
-   radiative_const = 4. * steboltz / (c * rhoi)  / unit_ergg
-
-   call eos_radiative_calc_temperature(tempi, eni, radiative_const, ideal_gas_ut_ratio)
-
-   ponrhoi =  radiative_const * tempi**4/3. + ideal_gas_ut_ratio * (gamma - 1) * tempi
+   ponrhoi =  radiative_const / rhoi * tempi**4/3. + ideal_gas_ut_ratio * (gamma - 1) * tempi
 
    spsoundi = sqrt(gamma*ponrhoi)
 
@@ -499,8 +494,8 @@ end function gamma_pwp
 !+
 !-----------------------------------------------------------------------
 subroutine init_eos(eos_type,ierr)
- use units,    only:unit_density,unit_velocity,unit_pressure
- use physcon,  only:mass_proton_cgs,kboltz
+ use units,    only:unit_density,unit_velocity,unit_pressure, unit_ergg
+ use physcon,  only:mass_proton_cgs,kboltz, c, steboltz
  use io,       only:error,warning
  use eos_mesa, only:init_eos_mesa
  use eos_helmholtz, only:eos_helmholtz_init
@@ -614,6 +609,11 @@ subroutine init_eos(eos_type,ierr)
  case(16)
 
     call init_eos_shen_NL3(ierr)
+
+ case(17)
+   ideal_gas_ut_ratio = kboltz / ((gamma - 1) * mass_proton_cgs * gmw ) / unit_ergg
+
+   radiative_const = 4. * steboltz / (c * unit_ergg)
 
  end select
  done_init_eos = .true.
