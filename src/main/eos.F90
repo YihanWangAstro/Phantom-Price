@@ -403,7 +403,7 @@ subroutine eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma)
    real, intent(in) :: eni
    real, intent(in) :: gamma
 
-   call eos_radiative_calc_temperature(tempi, eni, radiative_const / rhoi, ideal_gas_ut_ratio / (gamma - 1))
+   call eos_radiative_calc_temperature(tempi, eni, radiative_const / rhoi, ideal_gas_ut_ratio * (gamma - 1))
 
    ponrhoi =  radiative_const / rhoi * tempi**4/3. + ideal_gas_ut_ratio * tempi
 
