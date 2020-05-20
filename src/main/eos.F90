@@ -403,7 +403,24 @@ subroutine eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma)
    real, intent(in) :: eni
    real, intent(in) :: gamma
 
+   real :: ug, ur
+
    call eos_radiative_calc_temperature(tempi, eni, radiative_const / rhoi, ideal_gas_ut_ratio * (gamma - 1))
+   
+   !write (*,*) "Temp is ",tempi
+   !write (*,*) "u_g is ", ideal_gas_ut_ratio * tempi*(gamma-1)
+   !write (*,*) "u_r is ", radiative_const / rhoi * tempi**4
+   !write (*,*) "a ", radiative_const 
+   !write (*,*) "b ", ideal_gas_ut_ratio*(gamma-1)
+
+   ug = ideal_gas_ut_ratio * tempi*(gamma-1)
+   ur = radiative_const / rhoi * tempi**4
+   if( abs(eni -  ug - ur ) > 1e-5 ) then
+      write (*,*) "ug ", ug
+      write (*,*) "ur ", ur
+      write (*,*) "eni ", eni
+      write (*,*) "eni ", abs(eni-ug-ur)
+   endif
 
    ponrhoi =  radiative_const / rhoi * tempi**4/3. + ideal_gas_ut_ratio * tempi
 
@@ -612,7 +629,7 @@ subroutine init_eos(eos_type,ierr)
  case(17)
    ideal_gas_ut_ratio = kboltz / ( mass_proton_cgs * gmw * unit_ergg)
 
-   radiative_const = 4. * steboltz / (c * unit_ergg)
+   radiative_const = 4. * steboltz / (c * unit_ergg * unit_density)
 
  end select
  done_init_eos = .true.

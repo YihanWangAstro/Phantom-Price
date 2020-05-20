@@ -460,10 +460,11 @@ subroutine write_fulldump(t,dumpfile,ntotal,iorder,sphNG)
              call write_array(1,deltav(:,l,:),deltav_label,3,npart,k,ipass,idump,nums,ierrs(10))
           enddo
        endif
+       
        if (store_temperature) call write_array(1,temperature,'T',npart,k,ipass,idump,nums,ierrs(12))
 
        ! write pressure to file
-       if ((ieos==8 .or. ieos==9 .or. ieos==10 .or. ieos==15) .and. k==i_real) then
+       if ((ieos==8 .or. ieos==9 .or. ieos==10 .or. ieos==15 .or. ieos==17) .and. k==i_real) then
           if (.not. allocated(temparr)) allocate(temparr(npart))
           if (.not.done_init_eos) call init_eos(ieos,ierr)
           !$omp parallel do default(none) &
@@ -487,6 +488,8 @@ subroutine write_fulldump(t,dumpfile,ntotal,iorder,sphNG)
           !$omp end parallel do
           call write_array(1,temparr,'pressure',npart,k,ipass,idump,nums,ierrs(13))
        endif
+
+       
 
        ! smoothing length written as real*4 to save disk space
        call write_array(1,xyzh,xyzh_label,1,npart,k,ipass,idump,nums,ierrs(14),use_kind=4,index=4)
