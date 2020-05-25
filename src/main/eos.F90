@@ -376,9 +376,9 @@ real, intent(in) :: eni
 real :: h
 integer :: i
 
-integer, parameter :: maxiter = 50
+integer, parameter :: maxiter = 100
 real, parameter :: rtol = 1e-6
-real, parameter :: atol = 1e-6
+real, parameter :: atol = 1e-10
 
 h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
 
