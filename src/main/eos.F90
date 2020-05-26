@@ -377,15 +377,15 @@ real :: h
 integer :: i
 
 integer, parameter :: maxiter = 100
-real, parameter :: rtol = 1e-6
+real, parameter :: rtol = 1e-6 !relative error of u
 real :: dT
+
+dT = abs(eni / uthermal_df(tempi, a, b) * rtol)
 !real, parameter :: atol = 1e-6
 
-!h du/u = (4aT^3+b)/u dt/h0
+! du/u = (4aT^3+b)/u dt
 
 h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
-
-dT = h * rtol
 
 do i = 1, max(1, maxiter)
    if( abs(h) <= dT ) then
