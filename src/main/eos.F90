@@ -386,6 +386,7 @@ do i = 1, max(1, maxiter)
    if( abs(h) <= atol ) then
       exit
    else if(i+1 == maxiter) then
+      write(*,*) 'eni=', eni, ' a=', a, ' b=', b, ' T =', tempi
       call fatal('eos', 'cannot find converged temperature in u=aT^4+bT')
    endif
 
