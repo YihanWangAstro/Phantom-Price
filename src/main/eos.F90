@@ -381,7 +381,7 @@ real, parameter :: rtol = 1e-12 !relative error of u
 real :: dT
 
 if (eni <= 0) then
-   eni = - eni
+   return
 endif
 
 dT = abs(eni / uthermal_df(tempi, a, b) * rtol)
