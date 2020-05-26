@@ -380,6 +380,10 @@ integer, parameter :: maxiter = 100
 real, parameter :: rtol = 1e-6 !relative error of u
 real :: dT
 
+if (eni <= 0) then
+   return
+endif
+
 dT = abs(eni / uthermal_df(tempi, a, b) * rtol)
 !real, parameter :: atol = 1e-6
 
