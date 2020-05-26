@@ -377,17 +377,18 @@ real :: h
 integer :: i
 
 integer, parameter :: maxiter = 100
-!real, parameter :: rtol = 1e-6
-real, parameter :: atol = 1
+real, parameter :: rtol = 1e-6
+real :: dT
+!real, parameter :: atol = 1e-6
 
-if( tempi <= 0 ) then
-   tempi = 1e8
-endif
+!h du/u = (4aT^3+b)/u dt/h0
 
 h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
 
+dT = h * rtol
+
 do i = 1, max(1, maxiter)
-   if( abs(h) <= atol ) then
+   if( abs(h) <= dT ) then
       exit
    else if(i+1 == maxiter) then
       write(*,*) 'eni=', eni, ' a=', a, ' b=', b, ' T =', tempi
