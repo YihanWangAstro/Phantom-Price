@@ -380,6 +380,9 @@ integer, parameter :: maxiter = 100
 !real, parameter :: rtol = 1e-6
 real, parameter :: atol = 1
 
+if( tempi <= 0 ) then
+   tempi = 1e8
+
 h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
 
 do i = 1, max(1, maxiter)
