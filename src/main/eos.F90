@@ -377,11 +377,11 @@ real :: h
 integer :: i
 
 integer, parameter :: maxiter = 100
-real, parameter :: rtol = 1e-6 !relative error of u
+real, parameter :: rtol = 1e-12 !relative error of u
 real :: dT
 
 if (eni <= 0) then
-   return
+   eni = - eni
 endif
 
 dT = abs(eni / uthermal_df(tempi, a, b) * rtol)
@@ -413,8 +413,18 @@ subroutine eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma)
    real, intent(in) :: eni
    real, intent(in) :: gamma
 
+   !real :: ug, ur
+
    call eos_radiative_calc_temperature(tempi, eni, radiative_const / rhoi, ideal_gas_ut_ratio * (gamma - 1))
 
+   !ug = ideal_gas_ut_ratio * tempi*(gamma-1)
+   !ur = radiative_const / rhoi * tempi**4
+   !if( abs((eni -  ug - ur)/eni ) > 1e-5 ) then
+   !   write (*,*) "ug ", ug
+   !   write (*,*) "ur ", ur
+   !   write (*,*) "eni ", eni
+   !   write (*,*) "eni ", abs(eni-ug-ur)
+   !endif
    ponrhoi =  radiative_const / rhoi * tempi**4/3. + ideal_gas_ut_ratio * tempi
 
    spsoundi = sqrt(gamma*ponrhoi)
