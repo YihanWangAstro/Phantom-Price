@@ -377,13 +377,13 @@ real :: h
 integer :: i
 
 integer, parameter :: maxiter = 100
-real, parameter :: rtol = 1e-6
-real, parameter :: atol = 1e-10
+!real, parameter :: rtol = 1e-6
+real, parameter :: atol = 1
 
 h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
 
 do i = 1, max(1, maxiter)
-   if( abs(h)/(abs(tempi) + atol) <= rtol ) then
+   if( abs(h) <= atol ) then
       exit
    else if(i+1 == maxiter) then
       call fatal('eos', 'cannot find converged temperature in u=aT^4+bT')
@@ -402,8 +402,6 @@ subroutine eos_radiative_pres_sound(tempi, rhoi, ponrhoi, spsoundi, eni, gamma)
    real, intent(out) :: spsoundi
    real, intent(in) :: eni
    real, intent(in) :: gamma
-
-   real :: ug, ur
 
    call eos_radiative_calc_temperature(tempi, eni, radiative_const / rhoi, ideal_gas_ut_ratio * (gamma - 1))
 
