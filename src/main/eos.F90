@@ -382,6 +382,7 @@ real, parameter :: atol = 1
 
 if( tempi <= 0 ) then
    tempi = 1e8
+endif
 
 h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
 
