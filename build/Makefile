@@ -390,7 +390,7 @@ ifeq ($(SETUP), radiative_tde)
     ANALYSIS=analysis_tde.f90
     GRAVITY=yes
     STORE_TEMP=yes
-    MODFILE=moddump_tidal.f90
+    MODFILE=moddump_sink_tidal.f90
     KNOWN_SETUP=yes
 endif
 
