@@ -683,7 +683,6 @@ subroutine ptmass_accrete(is,nptmass,xi,yi,zi,hi,vxi,vyi,vzi,ui,fxi,fyi,fzi, &
 
 ! Set new mass and increment accreted mass
        dptmass(idmsi,i) = dptmass(idmsi,i) + pmassi
-       !write(*,*) "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 ! Set new thermal energy
        dptmass(idumsi,i) = dptmass(idumsi,i) + ui*pmassi
 
@@ -758,7 +757,6 @@ subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
 
  real                   :: newptmass(nptmass),newptmass1(nptmass)
 
- !write(*,*) "update ui", dptmass(idumsi,1:nptmass), xyzmh_ptmass(iu,1:nptmass)  
  ! Add angular momentum of sink particle using old properties (taken about the origin)
  xyzmh_ptmass(ispinx,1:nptmass) =xyzmh_ptmass(ispinx,1:nptmass)+xyzmh_ptmass(4,1:nptmass) &
                                 *(xyzmh_ptmass(2,1:nptmass)*vxyz_ptmass(3,1:nptmass)      &
