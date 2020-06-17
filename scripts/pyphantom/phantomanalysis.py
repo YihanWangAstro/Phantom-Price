@@ -43,6 +43,10 @@ class PhantomAnalysis(pyphantom.Simulation):
       except: 
           print "Unable to load uterm, likely the quantity is not stored."
       try:
+          self.poten      = self.get_part_poten(npart)/(udist**2/utime**2)
+      except: 
+          print "Unable to load poten, likely the quantity is not stored."  
+      try:
           self.temperature = self.get_part_temp(npart)
       except: 
        	  print	"Unable to load temperature, likely the quantity is not stored."

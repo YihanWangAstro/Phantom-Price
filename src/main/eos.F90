@@ -138,7 +138,6 @@ subroutine equationofstate(eos_type,ponrhoi,spsoundi,rhoi,xi,yi,zi,eni,tempi)
  real :: cgsrhoi, cgseni, cgspgas, pgas, gam1, cgsspsoundi
  real :: ponrhoi_rad
  integer :: ierr
-
  select case(eos_type)
  case(1)
 !

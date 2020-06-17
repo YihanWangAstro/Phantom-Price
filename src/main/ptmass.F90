@@ -80,7 +80,7 @@ module ptmass
  character(len=50), private  :: pt_prefix = 'Sink'
  character(len=50), private  :: pt_suffix = '00.ev'
 
- integer, public, parameter :: ndptmass = 13
+ integer, public, parameter :: ndptmass = 14
  integer, public, parameter :: &
        idxmsi           =  1, &
        idymsi           =  2, &
@@ -94,7 +94,8 @@ module ptmass
        idvzmsi          = 10, &
        idfxmsi          = 11, &
        idfymsi          = 12, &
-       idfzmsi          = 13
+       idfzmsi          = 13, &
+       idumsi           = 14 ! thermal energy increase (not thermal energy increase per unit mass)
 
  private
 
@@ -549,17 +550,17 @@ end function ptmass_not_obscured
 ! values will be used to update the sink's characteristics since the order
 ! in which particles is added is irrelevant.
 !----------------------------------------------------------------
-subroutine ptmass_accrete(is,nptmass,xi,yi,zi,hi,vxi,vyi,vzi,fxi,fyi,fzi, &
+subroutine ptmass_accrete(is,nptmass,xi,yi,zi,hi,vxi,vyi,vzi,ui,fxi,fyi,fzi, &
                           itypei,pmassi,xyzmh_ptmass,vxyz_ptmass,accreted, &
                           dptmass,time,facc,nbinmax,ibin_wakei,nfaili)
 
  !$ use omputils, only:ipart_omp_lock
- use part,       only: ihacc
+ use part,       only: ihacc, iu
  use kernel,     only: radkern2
  use io,         only: iprint,iverbose,fatal
  use io_summary, only: iosum_ptmass,maxisink,print_acc
  integer,           intent(in)    :: is,nptmass,itypei
- real,              intent(in)    :: xi,yi,zi,pmassi,vxi,vyi,vzi,fxi,fyi,fzi,time,facc
+ real,              intent(in)    :: xi,yi,zi,pmassi,vxi,vyi,vzi,ui,fxi,fyi,fzi,time,facc
  real,              intent(inout) :: hi
  real,              intent(in)    :: xyzmh_ptmass(nsinkproperties,maxptmass)
  real,              intent(in)    :: vxyz_ptmass(3,maxptmass)
@@ -682,6 +683,9 @@ subroutine ptmass_accrete(is,nptmass,xi,yi,zi,hi,vxi,vyi,vzi,fxi,fyi,fzi, &
 
 ! Set new mass and increment accreted mass
        dptmass(idmsi,i) = dptmass(idmsi,i) + pmassi
+       !write(*,*) "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+! Set new thermal energy
+       dptmass(idumsi,i) = dptmass(idumsi,i) + ui*pmassi
 
 ! Set new spin angular momentum; this component is the angular momentum
 ! of the accreted particles about the origin
@@ -698,7 +702,7 @@ subroutine ptmass_accrete(is,nptmass,xi,yi,zi,hi,vxi,vyi,vzi,fxi,fyi,fzi, &
        dptmass(idfxmsi,i) = dptmass(idfxmsi,i) + fxi*pmassi
        dptmass(idfymsi,i) = dptmass(idfymsi,i) + fyi*pmassi
        dptmass(idfzmsi,i) = dptmass(idfzmsi,i) + fzi*pmassi
-
+       
 ! Track values for summary
        print_acc = .true.
        if (nptmass > maxisink) then
@@ -745,7 +749,7 @@ end subroutine ptmass_accrete
 !+
 !-----------------------------------------------------------------------
 subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
- use part,  only:ispinx,ispiny,ispinz,imacc
+ use part,  only:ispinx,ispiny,ispinz,imacc,iu
  real,    intent(in)    :: dptmass(:,:)
  real,    intent(inout) :: xyzmh_ptmass(:,:)
  real,    intent(inout) :: vxyz_ptmass(:,:)
@@ -754,6 +758,7 @@ subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
 
  real                   :: newptmass(nptmass),newptmass1(nptmass)
 
+ !write(*,*) "update ui", dptmass(idumsi,1:nptmass), xyzmh_ptmass(iu,1:nptmass)  
  ! Add angular momentum of sink particle using old properties (taken about the origin)
  xyzmh_ptmass(ispinx,1:nptmass) =xyzmh_ptmass(ispinx,1:nptmass)+xyzmh_ptmass(4,1:nptmass) &
                                 *(xyzmh_ptmass(2,1:nptmass)*vxyz_ptmass(3,1:nptmass)      &
@@ -783,7 +788,16 @@ subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
  fxyz_ptmass(1,1:nptmass)       =(dptmass(idfxmsi,1:nptmass)+fxyz_ptmass(1,1:nptmass)*xyzmh_ptmass(4,1:nptmass))*newptmass1
  fxyz_ptmass(2,1:nptmass)       =(dptmass(idfymsi,1:nptmass)+fxyz_ptmass(2,1:nptmass)*xyzmh_ptmass(4,1:nptmass))*newptmass1
  fxyz_ptmass(3,1:nptmass)       =(dptmass(idfzmsi,1:nptmass)+fxyz_ptmass(3,1:nptmass)*xyzmh_ptmass(4,1:nptmass))*newptmass1
+
+
+ !update thermal energy
+ xyzmh_ptmass(iu,1:nptmass)     = xyzmh_ptmass(iu,1:nptmass) * xyzmh_ptmass(4,1:nptmass) + dptmass(idumsi,1:nptmass)
+ xyzmh_ptmass(iu,1:nptmass)     = xyzmh_ptmass(iu,1:nptmass) * newptmass1(1:nptmass)  
+
+ !update mass
  xyzmh_ptmass(4,1:nptmass)      =newptmass(1:nptmass)
+
+
  ! Subtract angular momentum of sink particle using new properties (taken about the origin)
  xyzmh_ptmass(ispinx,1:nptmass) =xyzmh_ptmass(ispinx,1:nptmass)-xyzmh_ptmass(4,1:nptmass) &
                                 *(xyzmh_ptmass(2,1:nptmass)*vxyz_ptmass(3,1:nptmass)      &
@@ -1290,10 +1304,18 @@ subroutine ptmass_create(nptmass,npart,itest,xyzh,vxyzu,fxyzu,fext,divcurlv,pote
        fxj = fxyzu(1,j) + fext(1,j)
        fyj = fxyzu(2,j) + fext(2,j)
        fzj = fxyzu(3,j) + fext(3,j)
-       call ptmass_accrete(nptmass,nptmass,xyzh(1,j),xyzh(2,j),xyzh(3,j),xyzh(4,j),&
-                           vxyzu(1,j),vxyzu(2,j),vxyzu(3,j),fxj,fyj,fzj, &
-                           itypej,pmassj,xyzmh_ptmass,vxyz_ptmass,accreted, &
-                           dptmass,time,1.0,ibin_wakei,ibin_wakei)
+       if (maxvxyzu >= 4) then
+         call ptmass_accrete(nptmass,nptmass,xyzh(1,j),xyzh(2,j),xyzh(3,j),xyzh(4,j),&
+                             vxyzu(1,j),vxyzu(2,j),vxyzu(3,j),vxyzu(4,j), fxj,fyj,fzj, &
+                             itypej,pmassj,xyzmh_ptmass,vxyz_ptmass,accreted, &
+                             dptmass,time,1.0,ibin_wakei,ibin_wakei)
+       else
+         call ptmass_accrete(nptmass,nptmass,xyzh(1,j),xyzh(2,j),xyzh(3,j),xyzh(4,j),&
+                             vxyzu(1,j),vxyzu(2,j),vxyzu(3,j),0.0, fxj,fyj,fzj, &
+                             itypej,pmassj,xyzmh_ptmass,vxyz_ptmass,accreted, &
+                             dptmass,time,1.0,ibin_wakei,ibin_wakei)
+       endif
+
 
        if (accreted) nacc = nacc + 1
     enddo

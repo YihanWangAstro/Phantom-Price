@@ -75,6 +75,7 @@ subroutine step_sts(npart,nactive,time,dt,dtextforce,dtnew,iprint)
 #endif
  real                   :: dtau0,dtdiff_in,dtsum,timei
  real                   :: dttemp3(3),dttemp2(2)
+
  !
  ! Initialise values
  !

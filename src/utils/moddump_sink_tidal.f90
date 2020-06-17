@@ -45,7 +45,7 @@ contains
 
 subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  use centreofmass
- use part,           only:xyzmh_ptmass,vxyz_ptmass,nptmass, ihacc, ihsoft, imacc, ispinx, ispiny, ispinz
+ use part,           only:xyzmh_ptmass,vxyz_ptmass,nptmass, ihacc, ihsoft, imacc, ispinx, ispiny, ispinz, iu
  !use externalforces, only:mass1
  !use externalforces, only:accradius1
  !use options,        only:iexternalforce,damp
@@ -227,6 +227,7 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  xyzmh_ptmass(ispinx,1) = 0.0
  xyzmh_ptmass(ispiny,1) = 0.0
  xyzmh_ptmass(ispinz,1) = 0.0
+ xyzmh_ptmass(iu,1) = 0.0
 
  call reset_centreofmass(npart,xyzh,vxyzu,nptmass,xyzmh_ptmass,vxyz_ptmass)
 

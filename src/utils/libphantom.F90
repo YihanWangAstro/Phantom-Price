@@ -674,6 +674,47 @@ subroutine get_part_u(npart_in, part_u, nodisabled, ierr)
 end subroutine
 
 !
+! Get u, if possible
+!
+subroutine get_part_poten(npart_in, part_poten, nodisabled, ierr)
+   use part, only:npart,gravity,xyzh
+   use dim, only:maxgrav, maxp
+   use units, only:udist,utime
+   implicit none
+   integer, intent(in) :: npart_in
+   double precision, dimension(npart_in), intent(out) :: part_poten
+   logical, intent(in)  :: nodisabled
+   integer, intent(out) :: ierr
+   integer :: i, n
+  
+   if (gravity .and. maxgrav==maxp) then
+      if (nodisabled) then
+         n = 0
+         do i=1,npart
+            if (xyzh(4,i)  >  0.) then
+               n = n + 1
+               if (n  >  npart_in) then
+                  ierr = 1
+                  exit
+               endif
+               part_poten(n) = poten(i)
+            endif
+         enddo
+      else
+         if (npart_in == npart) then
+            part_poten(1:npart) = dble(poten(1:npart))
+         else
+            ierr = 1
+         endif
+      endif
+   else
+      ierr = 2
+   endif
+  end subroutine
+
+  
+
+!
 ! Get temperature, if stored
 !
 subroutine get_part_temp(npart_in, part_temp, nodisabled, ierr)
@@ -725,11 +766,11 @@ end subroutine
 ! Get ptmass properties: location, accretion radius, mass
 !
 subroutine get_ptmass_xyzmh(nptmass_in, ptmass_xyzmh_out, ierr)
- use part, only:nptmass,xyzmh_ptmass
- use units, only:udist,umass
+ use part, only:nptmass,xyzmh_ptmass,iu
+ use units, only:udist,umass,unit_ergg
  implicit none
  integer, intent(in) :: nptmass_in
- double precision, dimension(5,nptmass_in) :: ptmass_xyzmh_out
+ double precision, dimension(6,nptmass_in) :: ptmass_xyzmh_out
  integer, intent(out) :: ierr
 
  integer :: i
@@ -737,6 +778,7 @@ subroutine get_ptmass_xyzmh(nptmass_in, ptmass_xyzmh_out, ierr)
  if (nptmass_in == nptmass) then
     do i=1,nptmass
        ptmass_xyzmh_out(:,i) = xyzmh_ptmass(1:5,i)*(/ udist, udist, udist, umass, udist /)
+       ptmass_xyzmh_out(6,i) = xyzmh_ptmass(iu,i)*unit_ergg
     enddo
  else
     ierr = 1

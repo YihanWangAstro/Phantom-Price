@@ -133,14 +133,16 @@ module part
  integer, parameter :: ispiny = 9  ! spin angular momentum y
  integer, parameter :: ispinz = 10 ! spin angular momentum z
  integer, parameter :: i_tlast = 11 ! time of last injection
+ integer, parameter :: iu     = 12 ! thermal energy
+
  real, allocatable :: xyzmh_ptmass(:,:)
  real, allocatable :: vxyz_ptmass(:,:)
  real, allocatable :: fxyz_ptmass(:,:),fxyz_ptmass_sinksink(:,:)
  integer :: nptmass = 0   ! zero by default
  real    :: epot_sinksink
- character(len=*), parameter :: xyzmh_ptmass_label(11) = &
+ character(len=*), parameter :: xyzmh_ptmass_label(12) = &
   (/'x        ','y        ','z        ','m        ','h        ',&
-    'hsoft    ','maccreted','spinx    ','spiny    ','spinz    ','tlast    '/)
+    'hsoft    ','maccreted','spinx    ','spiny    ','spinz    ','tlast    ', 'u        '/)
  character(len=*), parameter :: vxyz_ptmass_label(3) = (/'vx','vy','vz'/)
 !
 !--self-gravity

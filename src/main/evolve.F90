@@ -149,6 +149,7 @@ subroutine evol(infile,logfile,evfile,dumpfile)
  np_cs_eq_0 = 0
  np_e_eq_0  = 0
 
+ !write(iprint,*) "this this main loop!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
  should_conserve_energy = (maxvxyzu==4 .and. ieos==2 .and. icooling==0 .and. &
                            ipdv_heating==1 .and. ishock_heating==1 &
                            .and. (.not.mhd .or. iresistive_heating==1))

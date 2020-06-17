@@ -46,7 +46,7 @@ module utils_dumpfiles_hdf5
  integer, parameter :: maxdustsmall_hdf5 = 50
  integer, parameter :: maxdusttypes_hdf5 = maxdustsmall_hdf5 + maxdustlarge_hdf5
  integer, parameter :: maxtypes_hdf5 = 7 + maxdustlarge_hdf5 - 1
- integer, parameter :: nsinkproperties_hdf5 = 11
+ integer, parameter :: nsinkproperties_hdf5 = 12
  integer, parameter :: iext_binary_hdf5 = 3
  integer, parameter :: iext_gwinspiral_hdf5 = 14
  integer, parameter :: iext_corot_binary_hdf5 = 16

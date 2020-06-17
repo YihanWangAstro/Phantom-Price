@@ -602,7 +602,6 @@ subroutine step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fext,time,nptmas
  real, save      :: dmdt = 0.
  logical         :: accreted,extf_is_velocity_dependent
  logical         :: last_step,done
-
 !
 ! determine whether or not to use substepping
 !
@@ -849,11 +848,20 @@ subroutine step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fext,time,nptmas
              fzi = fext(3,i)
 #ifdef IND_TIMESTEPS
              ibin_wakei = ibin_wake(i)
-#endif
-             call ptmass_accrete(1,nptmass,xyzh(1,i),xyzh(2,i),xyzh(3,i),xyzh(4,i),&
-                                 vxyzu(1,i),vxyzu(2,i),vxyzu(3,i),fxi,fyi,fzi,&
-                                 itype,pmassi,xyzmh_ptmass,vxyz_ptmass,&
-                                 accreted,dptmass,timei,f_acc,nbinmax,ibin_wakei,nfaili)
+#endif      
+             
+             if(maxvxyzu >= 4) then
+               call ptmass_accrete(1,nptmass,xyzh(1,i),xyzh(2,i),xyzh(3,i),xyzh(4,i),&
+                                   vxyzu(1,i),vxyzu(2,i),vxyzu(3,i),vxyzu(4,i),fxi,fyi,fzi,&
+                                   itype,pmassi,xyzmh_ptmass,vxyz_ptmass,&
+                                   accreted,dptmass,timei,f_acc,nbinmax,ibin_wakei,nfaili)
+             else
+               call ptmass_accrete(1,nptmass,xyzh(1,i),xyzh(2,i),xyzh(3,i),xyzh(4,i),&
+                                   vxyzu(1,i),vxyzu(2,i),vxyzu(3,i),0.0,fxi,fyi,fzi,&
+                                   itype,pmassi,xyzmh_ptmass,vxyz_ptmass,&
+                                   accreted,dptmass,timei,f_acc,nbinmax,ibin_wakei,nfaili)
+             endif
+
              if (accreted) then
                 naccreted = naccreted + 1
                 cycle accreteloop

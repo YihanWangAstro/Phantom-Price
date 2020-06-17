@@ -514,6 +514,10 @@ subroutine compute_energies(t)
        v2i    = vxi*vxi + vyi*vyi + vzi*vzi
        ekin   = ekin + pmassi*v2i
 
+       if (maxvxyzu >= 4) then
+         etherm = etherm + xyzmh_ptmass(12,i) * pmassi
+       endif
+
        ! rotational energy around each axis through the origin
        if (calc_erot) then
           call get_erot(xi,yi,zi,vxi,vyi,vzi,xyzcom,pmassi,erotxi,erotyi,erotzi)

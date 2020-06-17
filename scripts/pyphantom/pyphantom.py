@@ -307,6 +307,22 @@ class Simulation():
     # Returning output
     return part_u
 
+  def get_part_poten(self, npart, nodisabled=False):
+    # Input
+    npart_c = c_int(npart)
+    nodisabled_c = c_int(npart)
+    # Output
+    part_poten = zeros(npart, dtype=float)
+    ierr_c = c_int()
+    # Calling subroutine
+    self.libph.get_part_poten_(byref(npart_c), c_void_p(part_poten.ctypes.data), byref(nodisabled_c), byref(ierr_c))
+    ierr = ierr_c.value
+    # Handling errors
+    if ierr == 1: raise IncorrectNumberOfParticles
+    if ierr == 2: raise SpecificEnergyNotStored
+    # Returning output
+    return part_poten
+
   def get_part_temp(self, npart, nodisabled=False):
     # Input
     npart_c = c_int(npart)
@@ -335,7 +351,7 @@ class Simulation():
     # Input
     nptmass_c = c_int(nptmass)
     # Output
-    ptmass_xyzmh = zeros((5,nptmass), dtype=float, order='F')
+    ptmass_xyzmh = zeros((6,nptmass), dtype=float, order='F')
     ierr_c = c_int()
     # Calling subroutine
     self.libph.get_ptmass_xyzmh_(byref(nptmass_c), c_void_p(ptmass_xyzmh.ctypes.data), byref(ierr_c))
