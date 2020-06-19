@@ -31,7 +31,7 @@ module energies
  implicit none
 
  logical,         public    :: gas_only,track_mass,track_lum
- real,            public    :: ekin,etherm,emag,epot,etot,totmom,angtot,mtot,xyzcom(3)
+ real,            public    :: ekin,etherm,emag,epot,etot,totmom,angtot,mtot,xyzcom(3),eacc
  real,            public    :: vrms,rmsmach,accretedmass,mdust(maxdusttypes),mgas
  real,            public    :: xmom,ymom,zmom
  real,            public    :: totlum
@@ -115,6 +115,7 @@ subroutine compute_energies(t)
  epot = 0.
  emag = 0.
  etot = 0.
+ eacc = 0.
  xcom = 0.
  ycom = 0.
  zcom = 0.
@@ -472,7 +473,8 @@ subroutine compute_energies(t)
        angaccz = angaccz + pmassi*(xi*vyi - yi*vxi)
 
        call ev_data_update(ev_data_thread,iev_macc,pmassi)
-
+    elseif(nptmass > 0) then
+       call ev_data_update(ev_data_thread,iev_macc,pmassi)
     endif
  enddo
 !$omp enddo
@@ -514,9 +516,9 @@ subroutine compute_energies(t)
        v2i    = vxi*vxi + vyi*vyi + vzi*vzi
        ekin   = ekin + pmassi*v2i
 
-       if (maxvxyzu >= 4) then
-         etherm = etherm + xyzmh_ptmass(12,i) * pmassi
-       endif
+       !if (maxvxyzu >= 4) then
+       !  etherm = etherm + xyzmh_ptmass(12,i) * pmassi
+       !endif
 
        ! rotational energy around each axis through the origin
        if (calc_erot) then
@@ -568,6 +570,21 @@ subroutine compute_energies(t)
  if (nptmass > 1) epot = epot + epot_sinksink
 
  etot = ekin + etherm + emag + epot
+
+ if (track_mass) then
+   eacc = 0
+   if(nptmass > 0) then !sink particle
+     do i=1,nptmass
+        eacc = eacc + xyzmh_ptmass(12,i)*xyzmh_ptmass(4,i)
+     enddo
+   else!external force
+     accretedmass = ev_data(iev_sum, iev_macc)
+     eacc = accretedmass/accradius1
+   endif
+   ev_data(iev_sum,iev_eacc) = eacc ! total accretion energy
+   etot = etot + eacc
+endif
+if (track_lum) totlum = ev_data(iev_sum,iev_totlum)
 
  xcom = reduce_fn('+',xcom)
  ycom = reduce_fn('+',ycom)
@@ -660,11 +677,7 @@ subroutine compute_energies(t)
     ev_data(iev_sum,iev_angall) = sqrt(angxall*angxall + angyall*angyall + angzall*angzall)
  endif
 
- if (track_mass) then
-    accretedmass = ev_data(iev_sum,iev_macc)
-    ev_data(iev_sum,iev_eacc) = accretedmass/accradius1 ! total accretion energy
- endif
- if (track_lum) totlum = ev_data(iev_sum,iev_totlum)
+ 
 
  return
 end subroutine compute_energies

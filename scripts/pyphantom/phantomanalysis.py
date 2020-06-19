@@ -65,5 +65,6 @@ class PhantomAnalysis(pyphantom.Simulation):
       self.ptmass_xyzmh[2,:] = self.ptmass_xyzmh[2,:]/udist
       self.ptmass_xyzmh[3,:] = self.ptmass_xyzmh[3,:]/umass
       self.ptmass_xyzmh[4,:] = self.ptmass_xyzmh[4,:]/udist
+      self.ptmass_xyzmh[5,:] = self.ptmass_xyzmh[5,:]/(udist**2/utime**2)
       self.ptmass_vxyz    = self.get_ptmass_vxyz(nptmass)/(udist/utime)
       self.ptmass_spinxyz = self.get_ptmass_spinxyz(nptmass)/(udist**2*umass/utime)

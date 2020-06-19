@@ -121,7 +121,7 @@ contains
 subroutine equationofstate(eos_type,ponrhoi,spsoundi,rhoi,xi,yi,zi,eni,tempi)
  use io,    only:fatal,error,warning
  use part,  only:xyzmh_ptmass
- use units,   only:unit_density,unit_pressure,unit_ergg,unit_velocity, udist, utime, unit_energ
+ use units,   only:unit_density,unit_pressure,unit_ergg,unit_velocity
  use eos_mesa, only:get_eos_pressure_gamma1_mesa
  use eos_helmholtz, only:eos_helmholtz_pres_sound
  use eos_shen, only: eos_shen_NL3
@@ -136,7 +136,6 @@ subroutine equationofstate(eos_type,ponrhoi,spsoundi,rhoi,xi,yi,zi,eni,tempi)
  real :: r,omega,bigH,polyk_new,r1,r2
  real :: gammai
  real :: cgsrhoi, cgseni, cgspgas, pgas, gam1, cgsspsoundi
- real :: ponrhoi_rad
  integer :: ierr
  select case(eos_type)
  case(1)

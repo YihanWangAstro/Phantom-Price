@@ -648,7 +648,7 @@ subroutine get_part_u(npart_in, part_u, nodisabled, ierr)
  integer, intent(out) :: ierr
  integer :: i, n
 
- if (maxvxyzu == 4) then
+ if (maxvxyzu >= 4) then
     if (nodisabled) then
        n = 0
        do i=1,npart
@@ -658,7 +658,7 @@ subroutine get_part_u(npart_in, part_u, nodisabled, ierr)
                 ierr = 1
                 exit
              endif
-             part_u(n) = vxyzu(4,i)
+             part_u(n) = vxyzu(4,i)*udist**2/utime**2
           endif
        enddo
     else
@@ -677,7 +677,7 @@ end subroutine
 ! Get u, if possible
 !
 subroutine get_part_poten(npart_in, part_poten, nodisabled, ierr)
-   use part, only:npart,gravity,xyzh
+   use part, only:npart,gravity,xyzh,poten
    use dim, only:maxgrav, maxp
    use units, only:udist,utime
    implicit none
@@ -697,12 +697,12 @@ subroutine get_part_poten(npart_in, part_poten, nodisabled, ierr)
                   ierr = 1
                   exit
                endif
-               part_poten(n) = poten(i)
+               part_poten(n) = poten(i)*udist**2/utime**2
             endif
          enddo
       else
          if (npart_in == npart) then
-            part_poten(1:npart) = dble(poten(1:npart))
+            part_poten(1:npart) = dble(poten(1:npart)*udist**2/utime**2)
          else
             ierr = 1
          endif
@@ -777,8 +777,8 @@ subroutine get_ptmass_xyzmh(nptmass_in, ptmass_xyzmh_out, ierr)
 
  if (nptmass_in == nptmass) then
     do i=1,nptmass
-       ptmass_xyzmh_out(:,i) = xyzmh_ptmass(1:5,i)*(/ udist, udist, udist, umass, udist /)
-       ptmass_xyzmh_out(6,i) = xyzmh_ptmass(iu,i)*unit_ergg
+       ptmass_xyzmh_out(1:5,i) = xyzmh_ptmass(1:5,i)*(/ udist, udist, udist, umass, udist /)
+       ptmass_xyzmh_out(6,i) = xyzmh_ptmass(iu,i) * unit_ergg
     enddo
  else
     ierr = 1

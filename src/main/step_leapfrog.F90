@@ -850,17 +850,12 @@ subroutine step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fext,time,nptmas
              ibin_wakei = ibin_wake(i)
 #endif      
              
-             if(maxvxyzu >= 4) then
-               call ptmass_accrete(1,nptmass,xyzh(1,i),xyzh(2,i),xyzh(3,i),xyzh(4,i),&
-                                   vxyzu(1,i),vxyzu(2,i),vxyzu(3,i),vxyzu(4,i),fxi,fyi,fzi,&
-                                   itype,pmassi,xyzmh_ptmass,vxyz_ptmass,&
-                                   accreted,dptmass,timei,f_acc,nbinmax,ibin_wakei,nfaili)
-             else
-               call ptmass_accrete(1,nptmass,xyzh(1,i),xyzh(2,i),xyzh(3,i),xyzh(4,i),&
-                                   vxyzu(1,i),vxyzu(2,i),vxyzu(3,i),0.0,fxi,fyi,fzi,&
-                                   itype,pmassi,xyzmh_ptmass,vxyz_ptmass,&
-                                   accreted,dptmass,timei,f_acc,nbinmax,ibin_wakei,nfaili)
-             endif
+             
+            call ptmass_accrete(1,nptmass,xyzh(1,i),xyzh(2,i),xyzh(3,i),xyzh(4,i),&
+                                vxyzu(1,i),vxyzu(2,i),vxyzu(3,i),i,fxi,fyi,fzi,&
+                                itype,pmassi,xyzmh_ptmass,vxyz_ptmass,&
+                                accreted,dptmass,timei,f_acc,nbinmax,ibin_wakei,nfaili)
+        
 
              if (accreted) then
                 naccreted = naccreted + 1

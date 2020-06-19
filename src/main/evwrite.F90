@@ -84,7 +84,7 @@ subroutine init_evfile(iunit,evfile,open_file)
  use dim,       only: maxtypes,maxalpha,maxp,mhd,mhd_nonideal,lightcurve, &
                       use_CMacIonize
  use options,   only: calc_erot,ishock_heating,ipdv_heating,use_dustfrac
- use part,      only: igas,idust,iboundary,istar,idarkmatter,ibulge,npartoftype,ndusttypes
+ use part,      only: igas,idust,iboundary,istar,idarkmatter,ibulge,npartoftype,ndusttypes, nptmass
  use nicil,     only: use_ohm,use_hall,use_ambi,ion_rays,ion_thermal
  use viscosity, only: irealvisc
  integer,            intent(in) :: iunit
@@ -192,7 +192,7 @@ subroutine init_evfile(iunit,evfile,open_file)
        call fill_ev_tag(ev_fmt,iev_maccsink(2),'Macc sink 2', '0',i,j)
     endif
  endif
- if (was_accreted(iexternalforce,-1.0)) then
+ if (was_accreted(iexternalforce,-1.0) .or. nptmass > 0) then
     call fill_ev_tag(ev_fmt,iev_macc,     'accretedmas', 's',i,j)
     call fill_ev_tag(ev_fmt,iev_eacc,     'eacc',        '0',i,j)
     track_mass     = .true.

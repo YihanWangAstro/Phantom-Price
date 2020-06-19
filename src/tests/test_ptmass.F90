@@ -427,7 +427,7 @@ subroutine test_ptmass(ntests,npass)
     !$omp do
     do i=1,npart
        call ptmass_accrete(1,nptmass,xyzh(1,i),xyzh(2,i),xyzh(3,i),xyzh(4,i),&
-                           vxyzu(1,i),vxyzu(2,i),vxyzu(3,i),vxyzu(4,i),fxyzu(1,i),fxyzu(2,i),fxyzu(3,i), &
+                           vxyzu(1,i),vxyzu(2,i),vxyzu(3,i),i,fxyzu(1,i),fxyzu(2,i),fxyzu(3,i), &
                            igas,massoftype(igas),xyzmh_ptmass,vxyz_ptmass, &
                            accreted,dptmass_thread,t,1.0,ibin_wakei,ibin_wakei)
     enddo

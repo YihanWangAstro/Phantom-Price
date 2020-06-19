@@ -177,7 +177,7 @@ subroutine set_density_profile(np,xyzh,min,max,rhofunc,rhotab,xtab,start,geom,co
        istart = 0
     endif
 
-    !$omp parallel do default(none) &
+    !$omp parallel do default(private) &
     !$omp shared(np,xyzh,rhozero,igeom,rhotab,xtable,masstab,nt) &
     !$omp shared(xmin,xmax,totmass,icoord,is_r,is_rcyl,istart) &
     !$omp private(x,xold,xt,fracmassold,its,xprev,xi,hi,rhoi) &
