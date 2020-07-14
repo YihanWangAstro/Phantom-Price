@@ -118,9 +118,9 @@ subroutine convert_sinks_sphNG(npart,nptmass,iphase,xyzh,vxyzu,xyzmh_ptmass,vxyz
           vxyz_ptmass(1,nsink) = vxyzu(1,i)
           vxyz_ptmass(2,nsink) = vxyzu(2,i)
           vxyz_ptmass(3,nsink) = vxyzu(3,i)
-          if (maxvxyzu >= 4) then
-            xyzmh_ptmass(iu,nsink) = vxyzu(4,i)
-          endif
+          !if (maxvxyzu >= 4) then
+          !  xyzmh_ptmass(iu,nsink) = vxyzu(4,i)
+          !endif
           if (nptmass < 100) then
              print "(1x,a,i2,a,es13.6,a,es10.3,a)",'[CONVERTING SINK #',nsink,' sphNG->Phantom, M=',&
                    xyzmh_ptmass(4,nsink),' h= ',xyzmh_ptmass(ihacc,nsink),']'

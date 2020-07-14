@@ -200,7 +200,7 @@ subroutine step(npart,nactive,t,dtsph,dtextforce,dtnew)
 ! accretion onto sinks/potentials also happens during substepping
 !----------------------------------------------------------------------
  if (nptmass > 0 .or. iexternalforce > 0 .or. (h2chemistry .and. icooling > 0) .or. idamp > 0) then
-    call step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fext,t, &
+    call step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fxyzu,fext,t, &
                      nptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nbinmax,ibin_wake)
  else
     call step_extern_sph(dtsph,npart,xyzh,vxyzu)
@@ -558,10 +558,14 @@ end subroutine step_extern_sph
 !  algorithm over the "fast" forces.
 !+
 !----------------------------------------------------------------
-subroutine step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fext,time,nptmass, &
+subroutine step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fxyzu,fext,time,nptmass, &
                        xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nbinmax,ibin_wake)
+ !use centreofmass,   only:reset_centreofmass
  use dim,            only:maxptmass,maxp,maxvxyzu
  use io,             only:iverbose,id,master,iprint,warning
+ !use eos,            only: equationofstate,gamma,gamma_pwp,utherm
+ !use options,    only: ieos
+ !use energies,       only: xyzcom, xmom, ymom, zmom, compute_energies
  use externalforces, only:externalforce,accrete_particles,update_externalforce, &
                           update_vdependent_extforce_leapfrog,is_velocity_dependent
  use ptmass,         only:ptmass_predictor,ptmass_corrector,ptmass_accrete, &
@@ -586,14 +590,14 @@ subroutine step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fext,time,nptmas
  integer,         intent(in)    :: npart,ntypes,nptmass
  real,            intent(in)    :: dtsph,time
  real,            intent(inout) :: dtextforce
- real,            intent(inout) :: xyzh(:,:),vxyzu(:,:),fext(:,:)
+ real,            intent(inout) :: xyzh(:,:),vxyzu(:,:),fext(:,:), fxyzu(:,:)
  real,            intent(inout) :: xyzmh_ptmass(:,:),vxyz_ptmass(:,:),fxyz_ptmass(:,:)
  integer(kind=1), intent(in)    :: nbinmax
  integer(kind=1), intent(inout) :: ibin_wake(:)
  integer         :: i,itype,nsubsteps,idudtcool,ichem,naccreted,nfail,nfaili
  integer(kind=1) :: ibin_wakei
  real            :: timei,hdt,fextx,fexty,fextz,fextxi,fextyi,fextzi,phii,pmassi
- real            :: dtphi2,dtphi2i,vxhalfi,vyhalfi,vzhalfi,fxi,fyi,fzi,deni
+ real            :: dtphi2,dtphi2i,vxhalfi,vyhalfi,vzhalfi,fxi,fyi,fzi
  real            :: dudtcool,fextv(3),fac,poti
  real            :: dt,dtextforcenew,dtsinkgas,fonrmax,fonrmaxi
  real            :: dtf,accretedmass,t_end_step,dtextforce_min
@@ -681,7 +685,7 @@ subroutine step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fext,time,nptmas
     !$omp shared(xyzmh_ptmass,vxyz_ptmass,idamp,damp_fac) &
     !$omp shared(nptmass,f_acc,nsubsteps,C_force,divcurlv) &
     !$omp private(i,ichem,idudtcool,dudtcool,fxi,fyi,fzi,phii) &
-    !$omp private(fextx,fexty,fextz,fextxi,fextyi,fextzi,poti,deni,fextv,accreted) &
+    !$omp private(fextx,fexty,fextz,fextxi,fextyi,fextzi,poti,fextv,accreted) &
     !$omp private(fonrmaxi,dtphi2i,dtf) &
     !$omp private(vxhalfi,vyhalfi,vzhalfi) &
     !$omp firstprivate(pmassi,itype) &
@@ -830,7 +834,7 @@ subroutine step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fext,time,nptmas
           ! correct v to the full step using only the external force
           !
           vxyzu(1:3,i) = vxyzu(1:3,i) + hdt*fext(1:3,i)
-
+         
           if (iexternalforce > 0) then
              call accrete_particles(iexternalforce,xyzh(1,i),xyzh(2,i), &
                                     xyzh(3,i),xyzh(4,i),pmassi,timei,accreted)
@@ -849,10 +853,9 @@ subroutine step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fext,time,nptmas
 #ifdef IND_TIMESTEPS
              ibin_wakei = ibin_wake(i)
 #endif      
-             
-             
+
             call ptmass_accrete(1,nptmass,xyzh(1,i),xyzh(2,i),xyzh(3,i),xyzh(4,i),&
-                                vxyzu(1,i),vxyzu(2,i),vxyzu(3,i),i,fxi,fyi,fzi,&
+                                vxyzu(1,i),vxyzu(2,i),vxyzu(3,i),vxyzu(4,i),i,fxi,fyi,fzi,&
                                 itype,pmassi,xyzmh_ptmass,vxyz_ptmass,&
                                 accreted,dptmass,timei,f_acc,nbinmax,ibin_wakei,nfaili)
         
@@ -881,11 +884,16 @@ subroutine step_extern(npart,ntypes,dtsph,dtextforce,xyzh,vxyzu,fext,time,nptmas
     naccreted = int(reduceall_mpi('+',naccreted))
     nfail = int(reduceall_mpi('+',nfail))
 
-    if (id==master) call update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
-
+    if (id==master .and. naccreted > 0) then 
+      call update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
+      !call reset_centreofmass(npart,xyzh,vxyzu,nptmass,xyzmh_ptmass,vxyz_ptmass)
+    endif
+    
     call bcast_mpi(xyzmh_ptmass(:,1:nptmass))
     call bcast_mpi(vxyz_ptmass(:,1:nptmass))
     call bcast_mpi(fxyz_ptmass(:,1:nptmass))
+
+    
 
     if (iverbose >= 2 .and. id==master .and. naccreted /= 0) write(iprint,"(a,es10.3,a,i4,a,i4,a)") &
        'Step: at time ',timei,', ',naccreted,' particles were accreted amongst ',nptmass,' sink(s).'

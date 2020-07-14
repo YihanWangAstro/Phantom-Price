@@ -478,12 +478,13 @@ subroutine compute_energies(t)
     endif
  enddo
 !$omp enddo
+
 !
 !--add contribution from sink particles
 !
-
  if (id==master) then
     !$omp do
+  
     do i=1,nptmass
        xi     = xyzmh_ptmass(1,i)
        yi     = xyzmh_ptmass(2,i)
@@ -515,10 +516,6 @@ subroutine compute_energies(t)
 
        v2i    = vxi*vxi + vyi*vyi + vzi*vzi
        ekin   = ekin + pmassi*v2i
-
-       !if (maxvxyzu >= 4) then
-       !  etherm = etherm + xyzmh_ptmass(12,i) * pmassi
-       !endif
 
        ! rotational energy around each axis through the origin
        if (calc_erot) then
@@ -575,7 +572,7 @@ subroutine compute_energies(t)
    eacc = 0
    if(nptmass > 0) then !sink particle
      do i=1,nptmass
-        eacc = eacc + xyzmh_ptmass(12,i)*xyzmh_ptmass(4,i)
+        eacc = eacc + xyzmh_ptmass(12,i) !*xyzmh_ptmass(4,i)
      enddo
    else!external force
      accretedmass = ev_data(iev_sum, iev_macc)
@@ -586,10 +583,13 @@ subroutine compute_energies(t)
 endif
 if (track_lum) totlum = ev_data(iev_sum,iev_totlum)
 
+
  xcom = reduce_fn('+',xcom)
  ycom = reduce_fn('+',ycom)
  zcom = reduce_fn('+',zcom)
  mtot = reduce_fn('+',mtot)
+
+
  if (mtot > 0.0) dm = 1.0 / mtot
  xcom = xcom * dm
  ycom = ycom * dm
@@ -600,6 +600,9 @@ if (track_lum) totlum = ev_data(iev_sum,iev_totlum)
  zmom = reduce_fn('+',zmom)
  totmom = sqrt(xmom*xmom + ymom*ymom + zmom*zmom)
 
+ !!
+ etot = etot + totmom*totmom*dm*0.5
+ !!
  angx = reduce_fn('+',angx)
  angy = reduce_fn('+',angy)
  angz = reduce_fn('+',angz)

@@ -375,19 +375,19 @@ real :: h
 integer :: i
 
 integer, parameter :: maxiter = 100
-real, parameter :: rtol = 1e-12 !relative error of u
+real, parameter :: rtol = 1e-6 !relative error of u
 real :: dT
 
-if (eni <= 0) then
-   return
-endif
+!if (eni <= 0) then
+!   eni = fabs(eni)
+!endif
 
 dT = abs(eni / uthermal_df(tempi, a, b) * rtol)
 !real, parameter :: atol = 1e-6
 
 ! du/u = (4aT^3+b)/u dt
 
-h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
+h = uthermal_f(tempi, abs(eni), a, b) / uthermal_df(tempi, a, b)
 
 do i = 1, max(1, maxiter)
    if( abs(h) <= dT ) then
@@ -397,7 +397,7 @@ do i = 1, max(1, maxiter)
       call fatal('eos', 'cannot find converged temperature in u=aT^4+bT')
    endif
 
-   h = uthermal_f(tempi, eni, a, b) / uthermal_df(tempi, a, b)
+   h = uthermal_f(tempi, abs(eni), a, b) / uthermal_df(tempi, a, b)
    tempi = tempi - h
 enddo
 

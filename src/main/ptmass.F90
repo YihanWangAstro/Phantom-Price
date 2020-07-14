@@ -317,6 +317,7 @@ subroutine get_accel_sink_sink(nptmass,xyzmh_ptmass,fxyz_ptmass,phitot,dtsinksin
           ! acceleration of sink2 from sink1
           f2    = pmassi*fterm
           term  = pmassi*pmassj*psoft*hsoft1
+         
        else
           ! no softening on the sink-sink interaction
           dr3   = ddr*ddr*ddr
@@ -550,7 +551,7 @@ end function ptmass_not_obscured
 ! values will be used to update the sink's characteristics since the order
 ! in which particles is added is irrelevant.
 !----------------------------------------------------------------
-subroutine ptmass_accrete(is,nptmass,xi,yi,zi,hi,vxi,vyi,vzi,k,fxi,fyi,fzi, &
+subroutine ptmass_accrete(is,nptmass,xi,yi,zi,hi,vxi,vyi,vzi,ui,k,fxi,fyi,fzi, &
                           itypei,pmassi,xyzmh_ptmass,vxyz_ptmass,accreted, &
                           dptmass,time,facc,nbinmax,ibin_wakei,nfaili)
 
@@ -559,10 +560,10 @@ subroutine ptmass_accrete(is,nptmass,xi,yi,zi,hi,vxi,vyi,vzi,k,fxi,fyi,fzi, &
  use kernel,     only: radkern2
  use io,         only: iprint,iverbose,fatal
  use io_summary, only: iosum_ptmass,maxisink,print_acc
- use eos,        only: equationofstate,gamma,gamma_pwp,utherm
- use options,    only: ieos
+ !use eos,        only: equationofstate,gamma,gamma_pwp,utherm
+ !use options,    only: ieos
  integer,           intent(in)    :: is,nptmass,itypei,k
- real,              intent(in)    :: xi,yi,zi,pmassi,vxi,vyi,vzi,fxi,fyi,fzi,time,facc
+ real,              intent(in)    :: xi,yi,zi,pmassi,vxi,vyi,vzi,ui,fxi,fyi,fzi,time,facc
  real,              intent(inout) :: hi
  real,              intent(in)    :: xyzmh_ptmass(nsinkproperties,maxptmass)
  real,              intent(in)    :: vxyz_ptmass(3,maxptmass)
@@ -684,30 +685,29 @@ subroutine ptmass_accrete(is,nptmass,xi,yi,zi,hi,vxi,vyi,vzi,k,fxi,fyi,fzi, &
        dumz = 0.
        call get_accel_sink_gas(nptmass,xi,yi,zi,hi,xyzmh_ptmass,dumx,dumy,dumz,epot)
        epot = epot * pmassi
-
-       if (gravity) then
-          epot = epot + poten(k)
-       endif
-
+       !if (gravity) then
+       !   epot = epot + poten(k)
+       !endif
        eki = 0.5*pmassi*(vxi*vxi + vyi*vyi + vzi+vzi)
 
-       
-       rhoi = rhoh(hi,pmassi)
-       if (maxvxyzu >= 4) then
-          etherm = pmassi*utherm(vxyzu(4,k),rhoi)
-       else
-          call equationofstate(ieos,ponrhoi,spsoundi,rhoi,xi,yi,zi)
-          if (ieos==2 .and. gamma > 1.001) then
-             etherm = pmassi*ponrhoi/(gamma - 1.)
-          elseif (ieos==9) then
-             etherm = pmassi*ponrhoi/(gamma_pwp(rhoi) - 1.)
-          else
-             etherm = pmassi*1.5*ponrhoi
-          endif
-       endif
+       etherm = pmassi * ui
+       !rhoi = rhoh(hi,pmassi)
+       !if (maxvxyzu >= 4) then
+       !   etherm = pmassi*utherm(vxyzu(4,k),rhoi)
+       !else
+       !   call equationofstate(ieos,ponrhoi,spsoundi,rhoi,xi,yi,zi)
+       !   if (ieos==2 .and. gamma > 1.001) then
+       !      etherm = pmassi*ponrhoi/(gamma - 1.)
+       !   elseif (ieos==9) then
+       !     etherm = pmassi*ponrhoi/(gamma_pwp(rhoi) - 1.)
+       !   else
+       !      etherm = pmassi*1.5*ponrhoi
+       !   endif
+       !endif
       
 
 ! Set new position for the sink particles
+      
        dptmass(idxmsi,i) = dptmass(idxmsi,i) + xi*pmassi
        dptmass(idymsi,i) = dptmass(idymsi,i) + yi*pmassi
        dptmass(idzmsi,i) = dptmass(idzmsi,i) + zi*pmassi
@@ -743,8 +743,9 @@ subroutine ptmass_accrete(is,nptmass,xi,yi,zi,hi,vxi,vyi,vzi,k,fxi,fyi,fzi, &
           if (ifail == -1) iosum_ptmass(2,i) = iosum_ptmass(2,i) + 1
        endif
 
-       !$ call omp_unset_lock(ipart_omp_lock(i))
        hi = -abs(hi)
+       !$ call omp_unset_lock(ipart_omp_lock(i))
+       
 
        if (record_accreted) then
           !$omp critical(trackacc)
@@ -779,14 +780,17 @@ end subroutine ptmass_accrete
 !+
 !-----------------------------------------------------------------------
 subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
- use part,  only:ispinx,ispiny,ispinz,imacc,iu
+ use part,  only:ispinx,ispiny,ispinz,imacc,iu,npart,xyzh,massoftype,igas,isdead_or_accreted
  real,    intent(in)    :: dptmass(:,:)
  real,    intent(inout) :: xyzmh_ptmass(:,:)
  real,    intent(inout) :: vxyz_ptmass(:,:)
  real,    intent(inout) :: fxyz_ptmass(:,:)
  integer, intent(in)    :: nptmass
 
+ real                   :: depot(nptmass)
  real                   :: newptmass(nptmass),newptmass1(nptmass)
+ real                   :: dx, dy, dz, r2, pmassi
+ integer                :: i, j 
 
  ! Add angular momentum of sink particle using old properties (taken about the origin)
  xyzmh_ptmass(ispinx,1:nptmass) =xyzmh_ptmass(ispinx,1:nptmass)+xyzmh_ptmass(4,1:nptmass) &
@@ -801,11 +805,29 @@ subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
  ! Calculate new masses
  newptmass(1:nptmass)           =xyzmh_ptmass(4,1:nptmass)+dptmass(idmsi,1:nptmass)
  newptmass1(1:nptmass)          =1./newptmass(1:nptmass)
- ! Update position and accreted mass
+
+ 
+ pmassi = massoftype(igas)
+ do i=1,nptmass
+   depot(i) = 0
+   do j=1,npart
+      if (.not.isdead_or_accreted(xyzh(4,j))) then
+         dx = xyzh(1,j) - xyzmh_ptmass(1,i)
+         dy = xyzh(2,j) - xyzmh_ptmass(2,i)
+         dz = xyzh(3,j) - xyzmh_ptmass(3,i)
+         r2 = dx*dx + dy*dy + dz*dz + epsilon(r2)
+         depot(i) = depot(i) - pmassi*xyzmh_ptmass(4,i)/sqrt(r2)
+      endif
+   enddo
+ enddo
+
+! Update position and accreted mass
  xyzmh_ptmass(1,1:nptmass)      =(dptmass(idxmsi,1:nptmass)+xyzmh_ptmass(1,1:nptmass)*xyzmh_ptmass(4,1:nptmass))*newptmass1
  xyzmh_ptmass(2,1:nptmass)      =(dptmass(idymsi,1:nptmass)+xyzmh_ptmass(2,1:nptmass)*xyzmh_ptmass(4,1:nptmass))*newptmass1
  xyzmh_ptmass(3,1:nptmass)      =(dptmass(idzmsi,1:nptmass)+xyzmh_ptmass(3,1:nptmass)*xyzmh_ptmass(4,1:nptmass))*newptmass1
+ 
  xyzmh_ptmass(imacc, 1:nptmass) = xyzmh_ptmass(imacc,1:nptmass)+dptmass(idmsi,    1:nptmass)
+
  ! Add angular momentum contribution from the gas particles
  xyzmh_ptmass(ispinx,1:nptmass) =xyzmh_ptmass(ispinx,1:nptmass)+dptmass(idspinxsi,1:nptmass)
  xyzmh_ptmass(ispiny,1:nptmass) =xyzmh_ptmass(ispiny,1:nptmass)+dptmass(idspinysi,1:nptmass)
@@ -813,7 +835,7 @@ subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
 
 
  !>>>>>>>>>>>>>>>begin update internal energy
- xyzmh_ptmass(iu,1:nptmass)     = xyzmh_ptmass(iu,1:nptmass) * xyzmh_ptmass(4,1:nptmass) 
+ !xyzmh_ptmass(iu,1:nptmass)     = xyzmh_ptmass(iu,1:nptmass) * xyzmh_ptmass(4,1:nptmass) 
  
  !update accrated particles' lost energy
  xyzmh_ptmass(iu,1:nptmass)     = xyzmh_ptmass(iu,1:nptmass) + dptmass(idumsi,1:nptmass)
@@ -821,7 +843,7 @@ subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
  !update com kinetic energy lost
  xyzmh_ptmass(iu,1:nptmass)     = xyzmh_ptmass(iu,1:nptmass)  + 0.5 * xyzmh_ptmass(4,1:nptmass) * (vxyz_ptmass(1,1:nptmass) &
  *vxyz_ptmass(1,1:nptmass) + vxyz_ptmass(2,1:nptmass)*vxyz_ptmass(2,1:nptmass) + vxyz_ptmass(3,1:nptmass)*vxyz_ptmass(3,1:nptmass))
- 
+
  ! Update velocity, force, and final mass
  vxyz_ptmass(1,1:nptmass)       =(dptmass(idvxmsi,1:nptmass)+vxyz_ptmass(1,1:nptmass)*xyzmh_ptmass(4,1:nptmass))*newptmass1
  vxyz_ptmass(2,1:nptmass)       =(dptmass(idvymsi,1:nptmass)+vxyz_ptmass(2,1:nptmass)*xyzmh_ptmass(4,1:nptmass))*newptmass1
@@ -833,11 +855,25 @@ subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
  xyzmh_ptmass(iu,1:nptmass)     = xyzmh_ptmass(iu,1:nptmass)  - 0.5 *  newptmass(1:nptmass) * (vxyz_ptmass(1,1:nptmass) &
  *vxyz_ptmass(1,1:nptmass) + vxyz_ptmass(2,1:nptmass)*vxyz_ptmass(2,1:nptmass) + vxyz_ptmass(3,1:nptmass)*vxyz_ptmass(3,1:nptmass))
 
- xyzmh_ptmass(iu,1:nptmass)     = xyzmh_ptmass(iu,1:nptmass) * newptmass1(1:nptmass)  
+ !xyzmh_ptmass(iu,1:nptmass)     = xyzmh_ptmass(iu,1:nptmass) * newptmass1(1:nptmass)  
  !<<<<<<<<<<<<<<<<<end update internal energy
 
  !update mass
  xyzmh_ptmass(4,1:nptmass)      =newptmass(1:nptmass)
+
+ do i=1,nptmass
+   do j=1,npart
+      if (.not.isdead_or_accreted(xyzh(4,j))) then
+         dx = xyzh(1,j) - xyzmh_ptmass(1,i)
+         dy = xyzh(2,j) - xyzmh_ptmass(2,i)
+         dz = xyzh(3,j) - xyzmh_ptmass(3,i)
+         r2 = dx*dx + dy*dy + dz*dz + epsilon(r2)
+         depot(i) = depot(i) + pmassi*xyzmh_ptmass(4,i)/sqrt(r2)
+      endif
+   enddo
+ enddo
+
+ xyzmh_ptmass(iu,1:nptmass) = xyzmh_ptmass(iu,1:nptmass) + depot(1:nptmass)
 
  ! Subtract angular momentum of sink particle using new properties (taken about the origin)
  xyzmh_ptmass(ispinx,1:nptmass) =xyzmh_ptmass(ispinx,1:nptmass)-xyzmh_ptmass(4,1:nptmass) &
@@ -904,7 +940,7 @@ subroutine ptmass_create(nptmass,npart,itest,xyzh,vxyzu,fxyzu,fext,divcurlv,pote
  real    :: rij2,rik2,rjk2,dx,dy,dz,h_acc2
  real    :: vxi,vyi,vzi,dv2,dvx,dvy,dvz,rhomax
  real    :: alpha_grav,alphabeta_grav,radxy2,radxz2,radyz2
- real    :: etot,epot,ekin,etherm,erot,erotx,eroty,erotz
+ real    :: etot,epot,ekin,etherm,erot,erotx,eroty,erotz,tmp_ui
  real    :: rcrossvx,rcrossvy,rcrossvz,fxj,fyj,fzj
  real    :: pmassi,pmassj,pmassk,ponrhoj,rhoj,spsoundj
  real    :: q2i,qi,psofti,psoftj,psoftk,fsoft,epot_mass,epot_rad,pmassgas1
@@ -1346,8 +1382,22 @@ subroutine ptmass_create(nptmass,npart,itest,xyzh,vxyzu,fxyzu,fext,divcurlv,pote
        fyj = fxyzu(2,j) + fext(2,j)
        fzj = fxyzu(3,j) + fext(3,j)
        
+       rhoj = rhoh(xyzh(4,j),pmassj)
+          if (maxvxyzu >= 4) then
+             tmp_ui = utherm(vxyzu(4,j),rhoj)
+          else
+             call equationofstate(ieos,ponrhoj,spsoundj,rhoj,xj,yj,zj)
+             if (ieos==2 .and. gamma > 1.001) then
+               tmp_ui = ponrhoj/(gamma - 1.)
+             elseif (ieos==9) then
+               tmp_ui = ponrhoj/(gamma_pwp(rhoj) - 1.)
+             else
+               tmp_ui= 1.5*ponrhoj
+             endif
+          endif
+
       call ptmass_accrete(nptmass,nptmass,xyzh(1,j),xyzh(2,j),xyzh(3,j),xyzh(4,j),&
-                          vxyzu(1,j),vxyzu(2,j),vxyzu(3,j),j, fxj,fyj,fzj, &
+                          vxyzu(1,j),vxyzu(2,j),vxyzu(3,j), tmp_ui, j, fxj,fyj,fzj, &
                           itypej,pmassj,xyzmh_ptmass,vxyz_ptmass,accreted, & 
                           dptmass,time,1.0,ibin_wakei,ibin_wakei)
 

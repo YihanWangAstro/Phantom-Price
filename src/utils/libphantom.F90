@@ -778,7 +778,7 @@ subroutine get_ptmass_xyzmh(nptmass_in, ptmass_xyzmh_out, ierr)
  if (nptmass_in == nptmass) then
     do i=1,nptmass
        ptmass_xyzmh_out(1:5,i) = xyzmh_ptmass(1:5,i)*(/ udist, udist, udist, umass, udist /)
-       ptmass_xyzmh_out(6,i) = xyzmh_ptmass(iu,i) * unit_ergg
+       ptmass_xyzmh_out(6,i) = xyzmh_ptmass(iu,i) * unit_ergg * umass
     enddo
  else
     ierr = 1
