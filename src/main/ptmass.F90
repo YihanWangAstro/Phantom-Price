@@ -808,18 +808,18 @@ subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
 
  
  pmassi = massoftype(igas)
- do i=1,nptmass
-   depot(i) = 0
-   do j=1,npart
-      if (.not.isdead_or_accreted(xyzh(4,j))) then
-         dx = xyzh(1,j) - xyzmh_ptmass(1,i)
-         dy = xyzh(2,j) - xyzmh_ptmass(2,i)
-         dz = xyzh(3,j) - xyzmh_ptmass(3,i)
-         r2 = dx*dx + dy*dy + dz*dz + epsilon(r2)
-         depot(i) = depot(i) - pmassi*xyzmh_ptmass(4,i)/sqrt(r2)
-      endif
-   enddo
- enddo
+ !do i=1,nptmass
+ !  depot(i) = 0
+ !  do j=1,npart
+ !     if (.not.isdead_or_accreted(xyzh(4,j))) then
+ !        dx = xyzh(1,j) - xyzmh_ptmass(1,i)
+ !        dy = xyzh(2,j) - xyzmh_ptmass(2,i)
+ !        dz = xyzh(3,j) - xyzmh_ptmass(3,i)
+ !        r2 = dx*dx + dy*dy + dz*dz + epsilon(r2)
+ !        depot(i) = depot(i) - pmassi*xyzmh_ptmass(4,i)/sqrt(r2)
+ !     endif
+ !  enddo
+ !enddo
 
 ! Update position and accreted mass
  xyzmh_ptmass(1,1:nptmass)      =(dptmass(idxmsi,1:nptmass)+xyzmh_ptmass(1,1:nptmass)*xyzmh_ptmass(4,1:nptmass))*newptmass1
@@ -861,17 +861,17 @@ subroutine update_ptmass(dptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,nptmass)
  !update mass
  xyzmh_ptmass(4,1:nptmass)      =newptmass(1:nptmass)
 
- do i=1,nptmass
-   do j=1,npart
-      if (.not.isdead_or_accreted(xyzh(4,j))) then
-         dx = xyzh(1,j) - xyzmh_ptmass(1,i)
-         dy = xyzh(2,j) - xyzmh_ptmass(2,i)
-         dz = xyzh(3,j) - xyzmh_ptmass(3,i)
-         r2 = dx*dx + dy*dy + dz*dz + epsilon(r2)
-         depot(i) = depot(i) + pmassi*xyzmh_ptmass(4,i)/sqrt(r2)
-      endif
-   enddo
- enddo
+ !do i=1,nptmass
+ !  do j=1,npart
+ !     if (.not.isdead_or_accreted(xyzh(4,j))) then
+ !        dx = xyzh(1,j) - xyzmh_ptmass(1,i)
+ !        dy = xyzh(2,j) - xyzmh_ptmass(2,i)
+ !        dz = xyzh(3,j) - xyzmh_ptmass(3,i)
+ !        r2 = dx*dx + dy*dy + dz*dz + epsilon(r2)
+ !        depot(i) = depot(i) + pmassi*xyzmh_ptmass(4,i)/sqrt(r2)
+ !     endif
+ !  enddo
+ !enddo
 
  xyzmh_ptmass(iu,1:nptmass) = xyzmh_ptmass(iu,1:nptmass) + depot(1:nptmass)
 
