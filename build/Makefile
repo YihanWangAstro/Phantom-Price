@@ -384,6 +384,16 @@ ifeq ($(SETUP), tde)
     KNOWN_SETUP=yes
 endif
 
+ifeq ($(SETUP), iso_sink_tde)
+#   tidal disruption simulations
+    SETUPFILE= setup_star.f90
+    ANALYSIS=analysis_tde.f90
+    GRAVITY=yes
+    ISOTHERMAL=yes
+    MODFILE=moddump_sink_tidal.f90
+    KNOWN_SETUP=yes
+endif
+
 ifeq ($(SETUP), radiative_tde)
 #   tidal disruption simulations
     SETUPFILE= setup_star.f90
