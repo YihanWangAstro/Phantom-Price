@@ -432,7 +432,7 @@ module moddump
    nerr = 0
    ierr = 0
    call open_db_from_file(db,filename,iunit,ierr)
-   call read_inopt(n_id,    'n_id',    db,min=0.,errcount=nerr)
+   call read_inopt(n_id,  'n_id',    db,min=0,errcount=nerr)
    call read_inopt(mh,    'mh',    db,min=0.,errcount=nerr)
    call read_inopt(rs,    'rs',    db,min=0.,errcount=nerr)
    call read_inopt(theta, 'theta', db,min=0.,errcount=nerr)
