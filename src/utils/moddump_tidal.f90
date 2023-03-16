@@ -34,15 +34,18 @@ module moddump
          theta,  &  ! stellar tilting along x
          phi,    &  ! stellar tilting along y
          r0,     &  ! starting distance
-         ecc        ! eccentricity
+         ecc,     &   ! eccentricity
+         racc_multifier !accretion radius multifier
 
 contains
 
 subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
- use centreofmass
- use externalforces, only:mass1
- use externalforces, only:accradius1
- use options,        only:iexternalforce,damp
+use centreofmass
+use part,           only:xyzmh_ptmass,vxyz_ptmass,nptmass, ihacc, ihsoft, imacc, ispinx, ispiny, ispinz
+   !use externalforces, only:mass1
+   !use externalforces, only:accradius1
+   !use options,        only:iexternalforce,damp
+
  use dim,            only:gr
  use prompting,      only:prompt
  use physcon,        only:pi,solarm,solarr
@@ -71,7 +74,7 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  theta = 0.                  ! stellar tilting along x
  phi   = 0.                  ! stellar tilting along y
  ecc   = 1.                  ! eccentricity
-
+ racc_multifier = 100
  rt = (Mh/Ms)**(1./3.) * rs         ! tidal radius
  rp = rt/beta                       ! pericenter distance
  r0 = 10.*rt                        ! starting radius
@@ -175,13 +178,13 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  endif
 
  !--Set input file parameters
- if (.not. gr) then
-    mass1          = Mh
-    iexternalforce = 1
-    damp           = 0.
-    c_light        = get_c_code()
-    accradius1     = (2*Mh)/(c_light**2) ! R_sch = 2*G*Mh/c**2
- endif
+ !--if (.not. gr) then
+ !-   mass1          = Mh
+ !   iexternalforce = 0
+ !   damp           = 0.
+ !   c_light        = get_c_code()
+ !   accradius1     = (2*Mh)/(c_light**2) ! R_sch = 2*G*Mh/c**2
+ !endif 
 
  !--Tilting the star
  theta=theta*pi/180.0
@@ -223,6 +226,21 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  theta = theta*pi/180.
  phi   = phi*pi/180.
 
+ ! -- create black hole as sink particle
+ nptmass = 1
+  
+ xyzmh_ptmass(1:3,1) = 0
+ vxyz_ptmass(1:3,1) = 0
+ xyzmh_ptmass(4,1) = Mh
+ xyzmh_ptmass(ihacc,1) = (2*Mh*rs)/((6.8565e2)**2) * racc_multifier
+ xyzmh_ptmass(ihsoft,1) = 0.0
+ xyzmh_ptmass(imacc,1) = 0.0
+ xyzmh_ptmass(ispinx,1) = 0.0
+ xyzmh_ptmass(ispiny,1) = 0.0
+ xyzmh_ptmass(ispinz,1) = 0.0
+
+
+ call reset_centreofmass(npart,xyzh,vxyzu,nptmass,xyzmh_ptmass,vxyz_ptmass)
  write(*,'(a)') "======================================================================"
  write(*,'(a,Es12.5,a)') ' Pericenter distance = ',rp,' code units'
  write(*,'(a,Es12.5,a)') ' Tidal radius        = ',rt,' code units'
@@ -257,6 +275,7 @@ subroutine write_setupfile(filename)
  call write_inopt(phi,   'phi',   'stellar rotation with respect to y-axis (in degrees)',iunit)
  call write_inopt(r0,    'r0',    'starting distance  (code units)',                     iunit)
  call write_inopt(ecc,   'ecc',   'eccentricity (1 for parabolic)',                      iunit)
+ call write_inopt(racc_multifier,    'racc_multifier',    'accretion radius multifier',  iunit)
  close(iunit)
 
 end subroutine write_setupfile
@@ -282,6 +301,7 @@ subroutine read_setupfile(filename,ierr)
  call read_inopt(phi,   'phi',   db,min=0.,errcount=nerr)
  call read_inopt(r0,    'r0',    db,min=0.,errcount=nerr)
  call read_inopt(ecc,   'ecc',   db,min=0.,max=1.,errcount=nerr)
+ call read_inopt(racc_multifier,'racc_multifier',db,min=0.,errcount=nerr)
 
  call close_db(db)
  if (nerr > 0) then
